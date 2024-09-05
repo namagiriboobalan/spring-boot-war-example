@@ -1,7 +1,13 @@
-FROM ubuntu:latest
+FROM ubuntu:latest AS clone
 RUN apt update
 RUN apt install git -y
-RUN apt install maven -y
+RUN git clone https://github.com/springhow/spring-boot-war-example.git
+WORKDIR /spring-boot-war-example
 
-RUN apt install openjdk-11-jdk -y
-RUN git clone https://github.com/namagiriboobalan/spring-boot-war-example.git
+FROM maven:3.8.6-amazoncorretto-11 AS build
+WORKDIR /app
+COPY --from=clone /spring-boot-war-example .
+RUN mvn clean install
+
+FROM artisantek/tomcat:1 AS deploy
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/
